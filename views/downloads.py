@@ -51,7 +51,7 @@ def render(df, view, cols, meta):
             st.session_state.ppt_buffer = build_population_ppt(
                 view_df=view,
                 df_full=df,
-                cols=cols,
+                cols_map=cols,
                 location_title=location,
                 year_title=year,
             )

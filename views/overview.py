@@ -2,7 +2,7 @@ import streamlit as st
 import plotly.express as px
 import pandas as pd
 import numpy as np
-from utils.formatting import donut_normal_abnormal
+from utils.formatting import donut_normal_abnormal, as_num
 
 def render(df, view, cols, meta):
     st.header("📊 Population Overview")
@@ -30,7 +30,17 @@ def render(df, view, cols, meta):
         (c4, "Needs attention", f"{status_counts.get('Needs Attention', 0):,}"),
     ]:
         with col:
-            st.metric(label, value)
+            st.markdown(
+                    f"""
+<div class="metric-card">
+  <div class="metric-label">{label}</div>
+  <div class="metric-value">{value}</div>
+</div>
+""",
+                    unsafe_allow_html=True,
+                )
+
+    st.subheader("Health status distribution")
 
     colA, colB = st.columns(2)
 
@@ -63,38 +73,88 @@ def render(df, view, cols, meta):
             fig_g.update_traces(textposition="outside")
             st.plotly_chart(fig_g, width="stretch")
 
+    st.subheader("Key biochemical risk flags (approximate)")
+    risk_cards = []
+    if cols["glucose"]:
+        g = as_num(view[cols["glucose"]])
+        risk_cards.append(
+            ("High fasting glucose (≥126)", f"{100 * (g >= 126).mean():.1f}%")
+        )
+    if cols["chol"]:
+        cchol = as_num(view[cols["chol"]])
+        risk_cards.append(
+            ("High cholesterol (≥240)", f"{100 * (cchol >= 240).mean():.1f}%")
+        )
+    if cols["bmi"]:
+        b = as_num(view[cols["bmi"]])
+        risk_cards.append(("Obesity (BMI ≥30)", f"{100 * (b >= 30).mean():.1f}%"))
+
+    if risk_cards:
+        rc1, rc2, rc3 = st.columns(3)
+        cols_rc = [rc1, rc2, rc3]
+        for idx, (label, val) in enumerate(risk_cards):
+            if idx >= len(cols_rc):
+                break
+            with cols_rc[idx]:
+                st.markdown(
+                    f"""
+<div class="metric-card">
+<div class="metric-label">{label}</div>
+<div class="metric-value">{val}</div>
+</div>
+""",
+                    unsafe_allow_html=True,
+                )
+
+
     st.subheader("Normal vs abnormal indicators")
 
-    d1, d2, d3 = st.columns(3)
+    charts = []
 
+    # Glucose
     if cols.get("glucose"):
-        with d1:
-            fig = donut_normal_abnormal(
-                view[cols["glucose"]],
-                "Fasting glucose",
-                (70, 99),
-            )
-            st.plotly_chart(fig, width="stretch")
+        fig = donut_normal_abnormal(
+            view[cols["glucose"]],
+            "Fasting glucose",
+            (70, 99),
+        )
+        charts.append(fig)
 
+    # Cholesterol
     if cols.get("chol"):
-        with d2:
-            fig = donut_normal_abnormal(
-                view[cols["chol"]],
-                "Total cholesterol",
-                (0, 199),
-            )
-            st.plotly_chart(fig, width="stretch")
+        fig = donut_normal_abnormal(
+            view[cols["chol"]],
+            "Total cholesterol",
+            (0, 199),
+        )
+        charts.append(fig)
 
+    # BMI
     if cols.get("bmi"):
-        with d3:
-            b = pd.to_numeric(view[cols["bmi"]], errors="coerce")
-            series = pd.Series(np.where((b >= 18.5) & (b < 25), b, np.nan))
-            fig = donut_normal_abnormal(
-                series,
-                "BMI (18.5–24.9 normal)",
-                (0, np.inf),
-            )
-            st.plotly_chart(fig, width="stretch")
+        b = pd.to_numeric(view[cols["bmi"]], errors="coerce")
+        series = pd.Series(np.where((b >= 18.5) & (b < 25), b, np.nan))
+        fig = donut_normal_abnormal(
+            series,
+            "BMI (18.5–24.9 normal)",
+            (0, np.inf),
+        )
+        charts.append(fig)
+
+    # -------------------------------------------------
+    # Render charts: 2 per row (half-page each)
+    # -------------------------------------------------
+    for i in range(0, len(charts), 2):
+        row = charts[i : i + 2]
+        cols_row = st.columns(2)
+
+        for col, fig in zip(cols_row, row):
+            with col:
+                st.plotly_chart(fig, width="stretch")
 
     st.subheader("Sample records")
     st.dataframe(view.head(100), width="stretch")
+    st.markdown(
+            '<div class="small-caption">Only first 100 rows shown for display; all '
+            "calculations are done on the full filtered dataset.</div>",
+            unsafe_allow_html=True,
+        )

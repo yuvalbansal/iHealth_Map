@@ -3,6 +3,11 @@ import plotly.express as px
 from typing import Optional, Tuple
 
 
+def as_num(series: pd.Series) -> pd.Series:
+    """Safely convert a series to numeric, coercing errors to NaN."""
+    return pd.to_numeric(series, errors="coerce")
+
+
 def parse_diet(val) -> str:
     s = str(val).strip().lower()
     if not s or s == "nan":

@@ -16,66 +16,94 @@ def assess_health(row: pd.Series, cols: dict) -> pd.Series:
     chol = val("chol")
     creat = val("creatinine")
     alt = val("alt")
+    
+    diet_raw = row.get(cols["diet"], None) if cols.get("diet") else None
+    diet = parse_diet(diet_raw)
 
     # Blood pressure
     if pd.notna(sys) and pd.notna(dia):
-        if sys >= 140 or dia >= 90:
+        if sys >= 180 or dia >= 120:
+            diagnosis.append("Hypertensive crisis")
+            prognosis.append("Immediate stroke / organ damage risk.")
+            rx.append("Urgent medical evaluation.")
+        elif sys >= 140 or dia >= 90:
             diagnosis.append("Hypertension")
-            prognosis.append("Elevated cardiovascular risk")
-            rx.append("Lifestyle modification and BP monitoring")
+            prognosis.append("High risk of CVD and stroke.")
+            rx.append("Low-salt diet, weight control, activity; consult physician.")
+        elif sys >= 120 or dia >= 80:
+            diagnosis.append("Pre-hypertension")
+            prognosis.append("Likely to progress without lifestyle change.")
+            rx.append("Lifestyle optimisation, regular BP monitoring.")
 
     # Glucose
     if pd.notna(glu):
         if glu >= 126:
-            diagnosis.append("Diabetes")
-            prognosis.append("High metabolic risk")
-            rx.append("Glycemic control and medical review")
+            diagnosis.append("Diabetes (fasting)")
+            prognosis.append("Micro/macro-vascular complication risk.")
+            rx.append("HbA1c, medical review, diet + activity plan.")
         elif 100 <= glu < 126:
-            diagnosis.append("Pre-diabetes")
-            prognosis.append("Risk of progression to diabetes")
-            rx.append("Diet and physical activity")
+            diagnosis.append("Pre-diabetes (fasting)")
+            prognosis.append("High risk of progression to diabetes.")
+            rx.append("Weight reduction, 150+ min/wk activity, low refined carbs.")
 
     # Cholesterol
-    if pd.notna(chol) and chol >= 240:
-        diagnosis.append("High cholesterol")
-        prognosis.append("Atherosclerotic risk")
-        rx.append("Dietary fat reduction")
+    if pd.notna(chol):
+        if chol >= 240:
+            diagnosis.append("High cholesterol")
+            prognosis.append("Atherosclerotic CVD risk.")
+            rx.append("Reduce saturated/trans fats, full lipid panel.")
+        elif 200 <= chol < 240:
+            diagnosis.append("Borderline high cholesterol")
+            prognosis.append("Moderate CVD risk.")
+            rx.append("Dietary modification, recheck in 3–6 months.")
 
     # BMI
     if pd.notna(bmi):
         if bmi >= 30:
             diagnosis.append("Obesity")
-            prognosis.append("Metabolic syndrome risk")
-            rx.append("Structured weight management")
+            prognosis.append("Metabolic syndrome & CVD risk.")
+            rx.append("Structured weight management, caloric deficit, exercise.")
         elif 25 <= bmi < 30:
             diagnosis.append("Overweight")
-            prognosis.append("Increased cardiometabolic risk")
-            rx.append("Lifestyle optimisation")
+            prognosis.append("Increased cardiometabolic risk.")
+            rx.append("Increase activity, portion control, diet optimisation.")
 
     # Kidney / liver
     if pd.notna(creat) and creat > 1.2:
         diagnosis.append("Possible renal impairment")
+        prognosis.append("Needs eGFR & urine protein assessment.")
+        rx.append("Avoid nephrotoxins, check renal profile.")
+    
     if pd.notna(alt) and alt > 40:
-        diagnosis.append("Elevated liver enzymes")
+        diagnosis.append("Elevated ALT (transaminitis)")
+        prognosis.append("Fatty liver / hepatitis / drug effect possible.")
+        rx.append("Review alcohol, obesity, hepatotoxic drugs; liver evaluation.")
 
     # Lifestyle
-    if cols.get("tobacco") and flag_yes(row.get(cols["tobacco"])) == "Yes":
+    tob_flag = flag_yes(row.get(cols["tobacco"])) if cols.get("tobacco") else "Unknown"
+    alc_flag = flag_yes(row.get(cols["alcohol"])) if cols.get("alcohol") else "Unknown"
+    
+    if tob_flag == "Yes":
         diagnosis.append("Tobacco exposure")
-    if cols.get("alcohol") and flag_yes(row.get(cols["alcohol"])) == "Yes":
-        diagnosis.append("Alcohol use")
+        prognosis.append("↑ risk of CVD, COPD, cancer.")
+        rx.append("Cessation counselling, nicotine replacement as needed.")
+    if alc_flag == "Yes":
+        diagnosis.append("Alcohol / substance use")
+        prognosis.append("Liver, mental health, injury risk.")
+        rx.append("Limit intake; consider de-addiction help for heavy use.")
 
     # Diet note
-    if cols.get("diet"):
-        diet = parse_diet(row.get(cols["diet"]))
-        if diet == "Vegetarian":
-            rx.append("Ensure adequate protein intake")
+    if diet == "Vegetarian":
+        rx.append("Ensure adequate protein: dals, soy, paneer, nuts & seeds.")
+    elif diet == "Non-Vegetarian":
+        rx.append("Prefer fish & skinless poultry; limit fried & red meat.")
 
     # Final status
     if not diagnosis:
         status = "Healthy"
-        diagnosis = ["No major risk detected"]
-        prognosis = ["Maintain healthy lifestyle"]
-        rx = ["Regular screening"]
+        diagnosis.append("No major risk flags detected.")
+        prognosis.append("Maintain healthy lifestyle & periodic screening.")
+        rx.append("Balanced diet, physical activity, regular check-ups.")
     elif len(diagnosis) == 1:
         status = "At Risk"
     else:
