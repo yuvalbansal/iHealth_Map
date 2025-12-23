@@ -44,13 +44,28 @@ def configure_plotly_theme():
     return dict(
         font_family=DesignTheme.BODY_FONT,
         font_color="#333333",
+        font_size=16,
         title_font_family=DesignTheme.HEAD_FONT,
-        title_font_size=20,
+        title_font_size=24,
         colorway=DesignTheme.COLOR_SEQUENCE,
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
-        xaxis=dict(showgrid=False, linecolor="#333"),
-        yaxis=dict(showgrid=True, gridcolor="#eee", linecolor="#333"),
+        xaxis=dict(
+            showgrid=False, 
+            linecolor="#333",
+            title_font_size=20,
+            tickfont_size=16
+        ),
+        yaxis=dict(
+            showgrid=True, 
+            gridcolor="#eee", 
+            linecolor="#333",
+            title_font_size=20,
+            tickfont_size=16
+        ),
+        legend=dict(
+            font_size=18
+        ),
     )
 
 # ---------------------------------------------------------------------
@@ -109,7 +124,7 @@ def donut_normal_abnormal(series, label, thresholds):
         hole=0.55,
         title=label,
     )
-    fig.update_traces(textinfo="percent+label")
+    fig.update_traces(textinfo="percent+label", textfont_size=18)
     fig.update_layout(showlegend=False, margin=dict(l=0, r=0, t=40, b=0))
     return fig
 
@@ -253,6 +268,7 @@ def build_population_ppt(
             format_title(slide, title)
             
         fig.update_layout(plotly_layout)
+        fig.update_traces(textfont_size=18)
         fig.update_layout(margin=dict(l=20, r=20, t=50, b=20))
         
         img_bytes = fig.to_image(format="png", width=1200, height=750, scale=2)
@@ -342,7 +358,7 @@ def build_population_ppt(
         
         fig = px.pie(status_counts, values="Count", names="Status", hole=0.6,
                      color_discrete_sequence=[DesignTheme.COLOR_SEQUENCE[0], DesignTheme.COLOR_SEQUENCE[2]])
-        fig.update_traces(textinfo="percent+label")
+        fig.update_traces(textinfo="percent+label", textfont_size=20)
         
         # Render Chart Left
         fig.update_layout(plotly_layout)
