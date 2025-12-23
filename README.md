@@ -84,20 +84,19 @@ pyinstaller \
 - **Windows (PowerShell)**
 
 ```powershell
-pyinstaller \
-  --noconfirm \
-  --onedir \
-  --windowed \
-  --name iHealthMap \
-  --distpath . \
-  --add-data "views:views" \
-  --add-data "utils:utils" \
-  --add-data "data:data" \
-  --add-data ".streamlit:.streamlit" \
+pyinstaller `
+  --noconfirm `
+  --onedir `
+  --windowed `
+  --name iHealthMap `
+  --add-data "views;views" `
+  --add-data "utils;utils" `
+  --add-data "data;data" `
+  --add-data ".streamlit;.streamlit" `
   run_app_windows.py
 ```
 
-> The folder `iHealthMap` will contain the built app.
+> The folder `dist/iHealthMap` will contain the built app.
 
 ---
 
