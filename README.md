@@ -25,15 +25,15 @@ cd iHealth_Map
 - **Linux / macOS**
 
 ```bash
-python3 -m venv myenv
-source myenv/bin/activate
+python3 -m venv .env
+source .env/bin/activate
 ```
 
 - **Windows (PowerShell)**
 
 ```powershell
-python -m venv myenv
-myenv\Scripts\activate
+python -m venv .env
+.env\Scripts\activate
 ```
 
 > 💡 Make sure you are using **Python 3.9 or newer**.
@@ -54,7 +54,7 @@ pip install -r requirements.txt
 ## ▶️ 4. Run the Streamlit App
 
 ```bash
-streamlit run Big_B081225.py
+streamlit run app.py
 ```
 
 Once started, Streamlit will automatically open the app in your browser.
@@ -63,7 +63,45 @@ If it does not, open the URL shown in the terminal (usually `http://localhost:85
 
 ---
 
-## 📊 5. Using the App
+## 🐍 5. Build the App
+
+- **Linux / macOS**
+
+```bash
+pyinstaller \
+  --noconfirm \
+  --onedir \
+  --windowed \
+  --name iHealthMap \
+  --distpath . \
+  --add-data "views:views" \
+  --add-data "utils:utils" \
+  --add-data "data:data" \
+  --add-data ".streamlit:.streamlit" \
+  run_app_linux.py
+```
+
+- **Windows (PowerShell)**
+
+```powershell
+pyinstaller \
+  --noconfirm \
+  --onedir \
+  --windowed \
+  --name iHealthMap \
+  --distpath . \
+  --add-data "views:views" \
+  --add-data "utils:utils" \
+  --add-data "data:data" \
+  --add-data ".streamlit:.streamlit" \
+  run_app_windows.py
+```
+
+> The folder `iHealthMap` will contain the built app.
+
+---
+
+## 📊 6. Using the App
 
 1. Upload an **Excel (.xlsx)** file containing health screening data
 
