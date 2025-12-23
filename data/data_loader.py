@@ -1,3 +1,4 @@
+import streamlit as st
 import pandas as pd
 import numpy as np
 from utils.arrow_safe import make_arrow_safe
@@ -5,6 +6,7 @@ from utils.column_detection import detect_columns
 from utils.formatting import as_num
 
 
+@st.cache_data(show_spinner="Processing data...", ttl="2h")
 def load_and_prepare_data(uploaded_file):
     df_raw = pd.read_excel(uploaded_file, engine="openpyxl")
     df = make_arrow_safe(df_raw.copy())

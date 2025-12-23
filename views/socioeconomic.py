@@ -27,7 +27,7 @@ def render(df, view, cols, meta):
             inc_status = (
                 view[[cols["income"], "Health Status"]]
                 .dropna()
-                .groupby([cols["income"], "Health Status"])
+                .groupby([cols["income"], "Health Status"], observed=False)
                 .size()
                 .reset_index(name="Count")
             )
@@ -66,14 +66,14 @@ def render(df, view, cols, meta):
             occ_status = (
                 view[[cols["occupation"], "Health Status"]]
                 .dropna()
-                .groupby([cols["occupation"], "Health Status"])
+                .groupby([cols["occupation"], "Health Status"], observed=False)
                 .size()
                 .reset_index(name="Count")
             )
 
             # Keep only top 15 professions by total count
             rank = (
-                occ_status.groupby(cols["occupation"])["Count"]
+                occ_status.groupby(cols["occupation"], observed=False)["Count"]
                 .sum()
                 .sort_values(ascending=False)
                 .head(15)

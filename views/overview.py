@@ -131,12 +131,10 @@ def render(df, view, cols, meta):
 
     # BMI
     if cols.get("bmi"):
-        b = pd.to_numeric(view[cols["bmi"]], errors="coerce")
-        series = pd.Series(np.where((b >= 18.5) & (b < 25), b, np.nan))
         fig = donut_normal_abnormal(
-            series,
+            view[cols["bmi"]],
             "BMI (18.5–24.9 normal)",
-            (0, np.inf),
+            (18.5, 24.9),
         )
         charts.append(fig)
 

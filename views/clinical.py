@@ -42,7 +42,7 @@ def render(df, view, cols, meta):
         )
 
         bp_counts = (
-            bp_df.groupby([cols["bp_sys"], cols["bp_dia"]])
+            bp_df.groupby([cols["bp_sys"], cols["bp_dia"]], observed=False)
             .size()
             .reset_index(name="Count")
         )

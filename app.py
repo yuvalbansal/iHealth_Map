@@ -15,6 +15,13 @@ from views.community import render as community_page
 from views.socioeconomic import render as socioeconomic_page
 from views.downloads import render as downloads_page
 
+@st.cache_data(show_spinner=False)
+def get_view_after_filters(df, cols, _filters_key):
+    """
+    filters_key is a hashable representation of filter state
+    """
+    return apply_health_assessment(df, cols)
+
 PAGES = {
     "Overview": overview_page,
     "Clinical": clinical_page,
@@ -183,7 +190,7 @@ st.markdown(
     """
     <div style="text-align:center; margin-top:10px;">
         <span style="display:block; font-size:44px; font-weight:900; color:#EFBF04;">
-            Bharat_iHealthMap
+            Bharat iHealthMap
         </span>
         <span style="display:block; font-size:28px; font-weight:600; color:#E8E8E8;">
             Community Health Dashboard
@@ -236,14 +243,33 @@ with upload_col2:
 
 if uploaded_file:
     st.session_state["uploaded_file"] = uploaded_file
+    st.session_state["uploaded_file_size"] = uploaded_file.size
 
 if "uploaded_file" not in st.session_state:
     st.stop()
 
-# 1. Load basic cleaned data (no assessment yet)
-df, cols, meta = load_and_prepare_data(
-    st.session_state["uploaded_file"]
-)
+if (
+    "data_loaded" not in st.session_state
+    or st.session_state.get("last_file_name") != st.session_state["uploaded_file"].name
+    or st.session_state.get("last_file_size") != st.session_state["uploaded_file"].size
+):
+    df, cols, meta = load_and_prepare_data(
+        st.session_state["uploaded_file"]
+    )
+    st.session_state.update(
+        {
+            "df": df,
+            "cols": cols,
+            "meta": meta,
+            "data_loaded": True,
+            "last_file_name": st.session_state["uploaded_file"].name,
+            "last_file_size": st.session_state["uploaded_file"].size,
+        }
+    )
+
+df = st.session_state["df"]
+cols = st.session_state["cols"]
+meta = st.session_state["meta"]
 
 # ---------------------------------------------------------------------
 #  Sidebar filters
@@ -323,11 +349,20 @@ if cols.get("alcohol") and alc_sel:
 filtered = df[mask].copy()
 st.sidebar.success(f"Filtered records: {len(filtered):,} / {len(df):,}")
 
+filters_key = (
+    age_min,
+    age_max,
+    tuple(sorted(gender_sel)),
+    tuple(sorted(diet_sel)),
+    tuple(sorted(tob_sel)),
+    tuple(sorted(alc_sel)),
+)
+
 # ---------------------------------------------------------------------
 #  Health Assessment (on filtered data)
 # ---------------------------------------------------------------------
 if len(filtered) > 0:
-    view = apply_health_assessment(filtered, cols)
+    view = get_view_after_filters(filtered, cols, filters_key)
     meta["filtered_rows"] = len(view)
 else:
     view = filtered.copy()
@@ -350,22 +385,9 @@ with st.container():
     )
     st.markdown("</div>", unsafe_allow_html=True)
 
-@st.cache_data(show_spinner=True)
-def load_excel(uploaded_file):
-    """Safely read Excel using openpyxl if possible."""
-    try:
-        return pd.read_excel(uploaded_file, engine="openpyxl")
-    except TypeError:
-        # Fallback for older Pandas/Excel engines
-        return pd.read_excel(uploaded_file)
-
-
-df_raw = load_excel(uploaded_file)
-source_name = uploaded_file.name
-
+# Display metadata from the cached loader
 st.caption(
-    f"📄 Data source: **{source_name}** — rows: {len(df_raw):,}, "
-    f"columns: {len(df_raw.columns)}"
+    f"📄 Data source: **{meta['source_name']}** — rows: {meta['total_rows']:,}"
 )
 
 st.session_state.page = selected_page

@@ -48,7 +48,7 @@ def render(df, view, cols, meta):
     # We need a count column. We can use any column that is never null, 
     # or just size(). Let's use "is_unhealthy" count as a proxy for row count.
     grp = (
-        agg.groupby(loc_col)
+        agg.groupby(loc_col, observed=False)
         .agg(
             Population=("is_unhealthy", "count"),
             Unhealthy_rate=("is_unhealthy", "mean"),
