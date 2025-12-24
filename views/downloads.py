@@ -60,6 +60,6 @@ def render(df, view, cols, meta):
         st.download_button(
             "⬇️ Download PPT summary",
             data=st.session_state.ppt_buffer,
-            file_name="bharat_ihealthmap_summary.pptx",
+            file_name="ihealthmap_summary.pptx",
             mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
         )
